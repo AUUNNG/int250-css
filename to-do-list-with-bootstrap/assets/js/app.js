@@ -22,24 +22,31 @@ saveTaskChangesBtn.addEventListener('click', () => {
 });
 
 const addTaskBtn = document.getElementById('add');
+const titleInput = document.getElementById('title');
 
-addTaskBtn.addEventListener('click', () => {
+function submitTask() {
     const id = document.getElementById('id').value;
     const title = document.getElementById('title').value;
     const priority = document.getElementById('priority').value;
 
     if (id.trim() === '') {
         createTask(title, priority);
-        document.getElementById('id').value = '';
-        document.getElementById('title').value = '';
-        document.getElementById("priority").value = 'Low';
     } else {
         updateTask(id, title, priority);
-        document.getElementById('id').value = '';
-        document.getElementById('title').value = '';
-        document.getElementById("priority").value = 'Low';
     }
-})
+
+    document.getElementById('id').value = '';
+    document.getElementById('title').value = '';
+    document.getElementById('priority').value = 'Low';
+}
+
+addTaskBtn.addEventListener('click', submitTask);
+
+titleInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        submitTask();
+    }
+});
 
 const radios = document.querySelectorAll(
     'input[name="filter-status"]'
@@ -141,6 +148,8 @@ function populateTask(data) {
 }
 
 function pupulateTaskCounter(data) {
+    console.log(data);
+
     document.getElementById('total').textContent = data.length
     document.getElementById('active').textContent = data.filter(item => item.status === "Active").length
 }
@@ -149,6 +158,7 @@ async function fetchListTask() {
     try {
         tasks = await db.getAllTodo();
         populateTask(tasks);
+        pupulateTaskCounter(tasks)
     } catch (err) {
         console.log(err);
     }
@@ -164,19 +174,12 @@ function handleUpdateTask(id) {
     }
 }
 
-async function handleDeleteTask(id) {
+function handleDeleteTask(id) {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
 
     if (confirm(`Are you sure you want to delete this item?\nTitle: ${task.title}\nPriority: ${task.priority}\nStatus: ${task.status}`)) {
-        try {
-            await db.deleteTodo(id);
-            tasks = tasks.filter(t => t.id !== id);
-            populateTask(tasks);
-        } catch (err) {
-            console.error(err);
-            alert('Error deleting task: ' + err);
-        }
+        deleteTask(id)
     }
 }
 
@@ -235,7 +238,16 @@ async function updateTask(id, title, priority) {
     }
 }
 
-function deleteTask() { }
+async function deleteTask(id) {
+    try {
+        await db.deleteTodo(id);
+        tasks = tasks.filter(t => t.id !== id);
+        populateTask(tasks);
+    } catch (err) {
+        console.error(err);
+        alert('Error deleting task: ' + err);
+    }
+}
 
 init();
 
